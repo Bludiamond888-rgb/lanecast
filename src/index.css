@@ -28,9 +28,8 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 .status .tripd { margin-left: auto; }
 .signal { display: inline-flex; gap: 6px; align-items: center; }
 .signal .b { fill: var(--line); } .signal .b.on { fill: var(--fg); }
-.speedrow { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; }
-.gears { display: flex; flex-direction: column; gap: 2px; font-size: 15px; font-weight: 500; color: var(--mut); opacity: .7; }
-.gears .on { color: var(--accent); opacity: 1; font-weight: 700; }
+.speedrow { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 4px 0; }
+.speed { min-width: 0; }
 .speed .num { font-size: clamp(88px, 26vw, 150px); font-weight: 700; line-height: .9; letter-spacing: -.04em; transition: color .25s; }
 .speed .unit { font-size: 15px; font-weight: 500; letter-spacing: .14em; color: var(--mut); margin-top: 4px; padding-left: 6px; }
 .limit { width: 64px; padding: 6px 4px 4px; border-radius: 9px; background: #fff; color: #111; border: 2.5px solid #111; text-align: center; box-shadow: 0 2px 8px #00000018; transition: all .25s; }
@@ -69,6 +68,7 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
   .drive { grid-template-rows: 1fr; grid-template-columns: minmax(330px, 40%) 1fr; }
   .panel { justify-content: center; padding: 16px 28px; }
   .speed .num { font-size: clamp(90px, 13vw, 220px); }
+  .speedrow { gap: 28px; }
 }
 @media (orientation: landscape) and (max-height: 500px) {
   .panel { gap: 8px; padding: 8px 20px; }
@@ -78,8 +78,7 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 }
 @media (min-width: 1200px) {
   .status { font-size: 18px; }
-  .gears { font-size: 20px; }
-  .speed .unit { font-size: 20px; }
+    .speed .unit { font-size: 20px; }
   .limit { width: 86px; } .limit small { font-size: 12px; } .limit b { font-size: 38px; }
   .stat b { font-size: 28px; } .stat span { font-size: 13px; }
   .btn { font-size: 19px; padding: 18px; }

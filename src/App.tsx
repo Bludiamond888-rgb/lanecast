@@ -120,7 +120,6 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; spee
           <span className="tripd">{t ? `${distUnit(t.distance, u).toFixed(1)} ${du}` : '—'}</span>
         </div>
         <div className="speedrow">
-          <div className="gears" aria-hidden>{'PRND'.split('').map((g) => <span key={g} className={g === 'D' ? 'on' : ''}>{g}</span>)}</div>
           <div className="speed" data-testid="speed">
             <div className="num">{waiting ? '--' : Math.round(p.shown)}</div>
             <div className="unit">{u === 'mph' ? 'MPH' : 'KM/H'}</div>

@@ -1,6 +1,6 @@
 /* Lanecast service worker — generated at build time (see vite.config.ts). */
 const VERSION = '__VERSION__'
-const CACHE = `lanecast-v1-${VERSION}`
+const CACHE = `lanecast-v2-${VERSION}`
 const PRECACHE = __PRECACHE__
 
 self.addEventListener('install', (event) => {
