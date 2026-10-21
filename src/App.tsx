@@ -178,11 +178,11 @@ function Road({ mps }: { mps: number }) {
         <defs>
           <linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" className="rg0" /><stop offset="1" className="rg1" /></linearGradient>
           <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset=".35" stopColor="#fff" stopOpacity="1" /></linearGradient>
-          <mask id="m"><rect width="400" height="800" fill="url(#fade)" /></mask>
+          <mask id="m" maskUnits="userSpaceOnUse" x="-1600" y="0" width="3600" height="800"><rect x="-1600" width="3600" height="800" fill="url(#fade)" /></mask>
           <radialGradient id="shadow"><stop offset="0" stopColor="#000" stopOpacity=".28" /><stop offset="1" stopColor="#000" stopOpacity="0" /></radialGradient>
         </defs>
         <g mask="url(#m)">
-          <path d="M182,0 L218,0 L470,800 L-70,800 Z" fill="url(#rg)" />
+          <path d="M-1600,0 L2000,0 L2000,800 L-1600,800 Z" fill="url(#rg)" opacity=".45" /><path d="M182,0 L218,0 L470,800 L-70,800 Z" fill="url(#rg)" />
           <path d={lane(-70)} className="edge" /><path d={lane(470)} className="edge" />
           <g ref={g} className="dashes">
             <path d={lane(110)} pathLength="1200" /><path d={lane(290)} pathLength="1200" />
