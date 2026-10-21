@@ -43,7 +43,9 @@ await drive(b, land, 'light', 'drive-landscape.png', 52)
 await drive(b, land, 'dark', 'drive-landscape-dark.png', 52)
 await drive(b, desk, 'light', 'drive-desktop.png', 63)
 await drive(b, desk, 'dark', 'drive-desktop-dark.png', 63)
-await drive(b, iphone, 'light', 'drive-overlimit.png', 78)
+await drive(b, iphone, 'light', 'drive-overlimit-portrait.png', 78)
+await drive(b, land, 'dark', 'drive-overlimit.png', 78)
+await drive(b, land, 'light', 'drive-overlimit-landscape-light.png', 78)
 // waiting state (no sim, geolocation never answers)
 { const { ctx, p } = await page(b, iphone, 'light'); await p.goto(url + '#/drive'); await p.waitForTimeout(500); await p.screenshot({ path: out('drive-waiting.png') }); await ctx.close() }
 for (const [r, f] of [['trips', 'trips'], ['settings', 'settings']]) for (const th of ['light', 'dark']) {
