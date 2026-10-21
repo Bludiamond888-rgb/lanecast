@@ -64,7 +64,7 @@ html.no-scroll, html.no-scroll body { position: fixed; inset: 0; overflow: hidde
 .btn.ghost { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line); padding: 8px 14px; font-size: 14px; }
 
 /* landscape / wide (incl. car touchscreen browser) */
-@media (orientation: landscape) and (min-width: 600px) {
+@media (orientation: landscape) and (min-width: 520px) {
   .app { flex-direction: row-reverse; }
   .nav { flex-direction: column; justify-content: flex-end; padding: 12px 8px; }
   .drive { flex-direction: row; align-items: stretch; max-width: 1500px; gap: 4vw; padding: 12px 28px; }
