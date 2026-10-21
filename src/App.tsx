@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { smooth, speedFrom, toUnit, fromUnit, distUnit, type Fix } from './lib/speed'
+import { angle, frac, gaugeMax, polar, ticks } from './lib/gauge'
 import { startGps, type GpsStatus } from './lib/gps'
 import { addFix, avgMoving, finish, fmtDuration, newTrip, type Trip, type TripState } from './lib/trip'
 import { loadSettings, saveSettings, loadTrips, saveTrips, type Settings } from './lib/store'
@@ -10,8 +11,6 @@ const subHash = (cb: () => void) => { addEventListener('hashchange', cb); return
 const darkMq = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null
 const subDark = (cb: () => void) => { darkMq?.addEventListener('change', cb); return () => darkMq?.removeEventListener('change', cb) }
 
-const landMq = typeof matchMedia === 'function' ? matchMedia('(orientation: landscape)') : null
-const subLand = (cb: () => void) => { landMq?.addEventListener('change', cb); return () => landMq?.removeEventListener('change', cb) }
 
 function useClock() { const [n, setN] = useState(Date.now()); useEffect(() => { const i = setInterval(() => setN(Date.now()), 1000); return () => clearInterval(i) }, []); return n }
 
@@ -113,23 +112,15 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; spee
   const waiting = !p.hasFix && (p.status === 'waiting' || p.status === 'ok')
   return (
     <main className={`drive ${p.over ? 'over' : ''}`}>
-      <section className="panel">
+      <section className="hero">
         <div className="status">
           <span className="clock">{new Date(now).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
           <Signal status={p.status} accuracy={p.accuracy} />
           <span className="tripd">{t ? `${distUnit(t.distance, u).toFixed(1)} ${du}` : '—'}</span>
         </div>
-        <div className="speedrow">
-          <div className="speed" data-testid="speed">
-            <div className="num">{waiting ? '--' : Math.round(p.shown)}</div>
-            <div className="unit">{u === 'mph' ? 'MPH' : 'KM/H'}</div>
-          </div>
-          {p.settings.limitOn && (
-            <div className="limit" data-testid="limit" aria-label={`Alert at ${p.settings.limit}`}>
-              <small>SPEED<br />LIMIT</small><b>{p.settings.limit}</b>
-            </div>
-          )}
-        </div>
+        <Gauge value={p.shown} unit={u} waiting={waiting} />
+      </section>
+      <section className="side">
         {waiting && <div className="note pulse">Waiting for GPS…</div>}
         {p.status === 'denied' && (
           <div className="note err" data-testid="denied">
@@ -148,55 +139,37 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; spee
         </div>
         <button className={`btn trip ${t ? 'stop' : ''}`} onClick={p.toggleTrip} data-testid="trip-btn">{t ? 'End Trip' : 'Start Trip'}</button>
       </section>
-      <Road mps={p.speed} />
     </main>
   )
 }
 
 const Stat = ({ k, v, s }: { k: string; v: string; s?: string }) => <div className="stat"><span>{k}</span><b>{v}{s && <i> {s}</i>}</b></div>
 
-/** Perspective road with lane dashes that scroll proportionally to speed; top-down car silhouette. */
-function Road({ mps }: { mps: number }) {
-  const g = useRef<SVGGElement>(null), v = useRef(mps)
-  const land = useSyncExternalStore(subLand, () => !!landMq?.matches)
-  v.current = mps
-  useEffect(() => {
-    let off = 0, last = performance.now(), raf = 0
-    const tick = (n: number) => {
-      off = (off + v.current * 14 * ((n - last) / 1000)) % 120; last = n
-      g.current?.style.setProperty('--off', String(-off))
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick); return () => cancelAnimationFrame(raf)
-  }, [])
-  // lanes converge to vanishing point (200,0)
-  const lane = (xb: number) => `M${200 + (xb - 200) * 0.18},0 L${xb},800`
+/** Round 270° speedometer: ticks every 10, labels every 20, progress arc + needle, bold readout. */
+function Gauge({ value, unit, waiting }: { value: number; unit: Settings['unit']; waiting: boolean }) {
+  const max = gaugeMax(unit), C = 150, R = 128, f = waiting ? 0 : frac(value, max), deg = waiting ? -135 : angle(value, max)
+  const [sx, sy] = polar(C, C, R, -135), [ex, ey] = polar(C, C, R, 135)
+  const arc = `M${sx},${sy} A${R},${R} 0 1 1 ${ex},${ey}`
   return (
-    <section className="road" aria-hidden>
-      <svg viewBox="0 0 400 800" preserveAspectRatio={land ? "xMidYMax meet" : "xMidYMax slice"}>
-        <defs>
-          <linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" className="rg0" /><stop offset="1" className="rg1" /></linearGradient>
-          <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset=".35" stopColor="#fff" stopOpacity="1" /></linearGradient>
-          <mask id="m" maskUnits="userSpaceOnUse" x="-1600" y="0" width="3600" height="800"><rect x="-1600" width="3600" height="800" fill="url(#fade)" /></mask>
-          <radialGradient id="shadow"><stop offset="0" stopColor="#000" stopOpacity=".28" /><stop offset="1" stopColor="#000" stopOpacity="0" /></radialGradient>
-        </defs>
-        <g mask="url(#m)">
-          <path d="M-1600,0 L2000,0 L2000,800 L-1600,800 Z" fill="url(#rg)" opacity=".45" /><path d="M182,0 L218,0 L470,800 L-70,800 Z" fill="url(#rg)" />
-          <path d={lane(-70)} className="edge" /><path d={lane(470)} className="edge" />
-          <g ref={g} className="dashes">
-            <path d={lane(110)} pathLength="1200" /><path d={lane(290)} pathLength="1200" />
+    <div className="gauge" data-testid="speed">
+      <svg viewBox="0 0 300 300" role="img" aria-label={`${waiting ? 'No GPS' : Math.round(value)} ${unit === 'mph' ? 'mph' : 'km/h'}`}>
+        <circle cx={C} cy={C} r={146} className="dial" />
+        <path d={arc} className="track" pathLength={100} />
+        <path d={arc} className="prog" pathLength={100} style={{ strokeDashoffset: 100 - f * 100 }} />
+        {ticks(max).map(({ v, major }) => {
+          const d = angle(v, max), [x1, y1] = polar(C, C, R - 6, d), [x2, y2] = polar(C, C, R - (major ? 18 : 12), d), [lx, ly] = polar(C, C, R - 32, d)
+          return <g key={v}>
+            <line x1={x1} y1={y1} x2={x2} y2={y2} className={major ? 'tick major' : 'tick'} />
+            {major && <text x={lx} y={ly} className="tlabel" textAnchor="middle" dominantBaseline="central">{v}</text>}
           </g>
+        })}
+        <g className="needle" style={{ transform: `rotate(${deg}deg)` }}>
+          <path d={`M${C - 1.6},${C - 52} L${C},${C - R + 10} L${C + 1.6},${C - 52} Z`} />
         </g>
-        <g transform="translate(200 640)">
-          <ellipse cx="0" cy="8" rx="70" ry="120" fill="url(#shadow)" />
-          <path className="car" d="M-44,-92 C-44,-112 -26,-118 0,-118 C26,-118 44,-112 44,-92 L48,-30 L48,80 C48,104 30,112 0,112 C-30,112 -48,104 -48,80 L-48,-30 Z" />
-          <path className="glass" d="M-36,-46 C-20,-56 20,-56 36,-46 L32,-10 C12,-16 -12,-16 -32,-10 Z" />
-          <path className="glass" d="M-32,10 C-12,6 12,6 32,10 L34,58 C12,66 -12,66 -34,58 Z" opacity=".55" />
-          <path className="glass" d="M-30,72 C-12,78 12,78 30,72 L28,90 C10,96 -10,96 -28,90 Z" />
-          <rect x="-54" y="-38" width="8" height="12" rx="3" className="mirror" /><rect x="46" y="-38" width="8" height="12" rx="3" className="mirror" />
-        </g>
+        <text x={C} y={C + 6} className="num" textAnchor="middle" dominantBaseline="central">{waiting ? '--' : Math.round(value)}</text>
+        <text x={C} y={C + 48} className="unit" textAnchor="middle">{unit === 'mph' ? 'MPH' : 'KM/H'}</text>
       </svg>
-    </section>
+    </div>
   )
 }
 
