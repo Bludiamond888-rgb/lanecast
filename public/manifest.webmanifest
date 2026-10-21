@@ -1,0 +1,19 @@
+{
+  "name": "Lanecast Speedometer",
+  "short_name": "Lanecast",
+  "description": "Clean GPS speedometer with trip log and speed alert.",
+  "id": "./",
+  "start_url": "./#/drive",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e9eaec",
+  "theme_color": "#e9eaec",
+  "categories": ["navigation", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
