@@ -29,6 +29,12 @@ async function check(p, name) {
   if (o.sx || (name.startsWith('drive') && o.sy)) { bad++; console.log('OVERFLOW', name, o) }
   if (name.startsWith('drive')) {
     const r = await p.evaluate(() => { scrollTo(0, 500); document.scrollingElement.scrollTop = 500; const b = document.querySelector('.drive').getBoundingClientRect(); const els = [...document.querySelectorAll('.gauge svg, .stats, [data-testid=trip-btn], .status, .nav')].map((e) => e.getBoundingClientRect()); return { y: scrollY, top: document.scrollingElement.scrollTop, sh: document.documentElement.scrollHeight, ih: innerHeight, clip: els.some((e) => e.top < -0.5 || e.bottom > innerHeight + 0.5 || e.left < -0.5 || e.right > innerWidth + 0.5), b: b.height } })
+    const c = await p.evaluate(() => {
+      const g = document.querySelector('.gauge svg').getBoundingClientRect(), R = g.width / 2 * 146 / 150, cx = g.left + g.width / 2, cy = g.top + g.height / 2
+      const hit = [...document.querySelectorAll('.status, .stat, [data-testid=trip-btn], .nav a, .note')].filter((e) => { const b = e.getBoundingClientRect(); if (!b.width) return false
+        const nx = Math.max(b.left, Math.min(cx, b.right)), ny = Math.max(b.top, Math.min(cy, b.bottom)); return Math.hypot(nx - cx, ny - cy) < R }).map((e) => e.className || e.textContent)
+      return { dx: cx - innerWidth / 2, dy: cy - innerHeight / 2, hit, size: Math.round(g.width) } })
+    if (Math.abs(c.dx) > 2 || Math.abs(c.dy) > 2 || c.hit.length) { bad++; console.log('OFFCENTER/OVERLAP', name, c) } else console.log('centered', name, c.dx.toFixed(1), c.dy.toFixed(1), 'size', c.size)
     if (r.y || r.top || r.sh > r.ih || r.clip) { bad++; console.log('SCROLL/CLIP', name, r) } else console.log('ok', name, r.sh, '<=', r.ih)
   }
 }

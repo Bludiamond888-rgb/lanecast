@@ -120,15 +120,13 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; spee
   const waiting = !p.hasFix && (p.status === 'waiting' || p.status === 'ok')
   return (
     <main className={`drive ${p.over ? 'over' : ''}`}>
-      <section className="hero">
-        <div className="status">
-          <span className="clock">{new Date(now).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
-          <Signal status={p.status} accuracy={p.accuracy} />
-          <span className="tripd">{t ? `${distUnit(t.distance, u).toFixed(1)} ${du}` : '—'}</span>
-        </div>
-        <Gauge value={p.shown} unit={u} waiting={waiting} />
-      </section>
-      <section className="side">
+      <div className="status">
+        <span className="clock">{new Date(now).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
+        <Signal status={p.status} accuracy={p.accuracy} />
+        <span className="tripd">{t ? `${distUnit(t.distance, u).toFixed(1)} ${du}` : '—'}</span>
+      </div>
+      <Gauge value={p.shown} unit={u} waiting={waiting} />
+      <section className="left">
         {waiting && <div className="note pulse">Waiting for GPS…</div>}
         {p.status === 'denied' && (
           <div className="note err" data-testid="denied">
@@ -145,6 +143,8 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; spee
           <Stat k="Top" v={t ? Math.round(toUnit(t.top, u)).toString() : '0'} s={u === 'mph' ? 'mph' : 'km/h'} />
           <Stat k="Avg" v={t ? Math.round(toUnit(avgMoving(t), u)).toString() : '0'} s={u === 'mph' ? 'mph' : 'km/h'} />
         </div>
+      </section>
+      <section className="right">
         <button className={`btn trip ${t ? 'stop' : ''}`} onClick={p.toggleTrip} data-testid="trip-btn">{t ? 'End Trip' : 'Start Trip'}</button>
       </section>
     </main>
