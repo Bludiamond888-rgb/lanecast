@@ -14,6 +14,12 @@ body { background: var(--bg); overscroll-behavior: none; transition: background 
 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .app { height: 100dvh; display: flex; flex-direction: column; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 
+/* Drive: fixed, non-scrolling full viewport */
+html.no-scroll, html.no-scroll body { position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none; height: 100%; width: 100%; }
+.app.r-drive { position: fixed; inset: 0; height: 100dvh; width: 100vw; overflow: hidden; overscroll-behavior: none; touch-action: none; }
+.app.r-drive .drive, .app.r-drive .gauge { overflow: hidden; touch-action: none; }
+.app.r-drive .gauge svg { max-width: min(100%, 100dvh); }
+
 /* nav */
 .nav { display: flex; justify-content: center; gap: 6px; padding: 8px 12px 10px; }
 .nav a { text-decoration: none; color: var(--mut); font-size: 14px; font-weight: 500; letter-spacing: .02em; padding: 8px 18px; border-radius: 999px; }

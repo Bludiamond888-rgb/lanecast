@@ -27,6 +27,10 @@ async function page(browser, opts, theme, extra = {}) {
 async function check(p, name) {
   const o = await p.evaluate(() => ({ sx: document.documentElement.scrollWidth > innerWidth, sy: document.documentElement.scrollHeight > innerHeight + 1 }))
   if (o.sx || (name.startsWith('drive') && o.sy)) { bad++; console.log('OVERFLOW', name, o) }
+  if (name.startsWith('drive')) {
+    const r = await p.evaluate(() => { scrollTo(0, 500); document.scrollingElement.scrollTop = 500; const b = document.querySelector('.drive').getBoundingClientRect(); const els = [...document.querySelectorAll('.gauge svg, .stats, [data-testid=trip-btn], .status, .nav')].map((e) => e.getBoundingClientRect()); return { y: scrollY, top: document.scrollingElement.scrollTop, sh: document.documentElement.scrollHeight, ih: innerHeight, clip: els.some((e) => e.top < -0.5 || e.bottom > innerHeight + 0.5 || e.left < -0.5 || e.right > innerWidth + 0.5), b: b.height } })
+    if (r.y || r.top || r.sh > r.ih || r.clip) { bad++; console.log('SCROLL/CLIP', name, r) } else console.log('ok', name, r.sh, '<=', r.ih)
+  }
 }
 async function drive(browser, opts, theme, name, mph = 47, extra) {
   const { ctx, p } = await page(browser, opts, theme, extra)
@@ -35,12 +39,15 @@ async function drive(browser, opts, theme, name, mph = 47, extra) {
   await check(p, name); await p.screenshot({ path: out(name) }); await ctx.close()
 }
 const iphone = devices['iPhone 13'], land = devices['iPhone 13 landscape']
+const se = devices['iPhone SE'], seLand = devices['iPhone SE landscape']
 const desk = { viewport: { width: 1920, height: 1200 } }
 const b = await webkit.launch()
 await drive(b, iphone, 'light', 'drive-portrait-light.png')
 await drive(b, iphone, 'dark', 'drive-portrait-dark.png')
 await drive(b, land, 'light', 'drive-landscape.png', 52)
 await drive(b, land, 'dark', 'drive-landscape-dark.png', 52)
+await drive(b, seLand, 'light', 'drive-se-landscape.png', 52)
+await drive(b, se, 'dark', 'drive-se-portrait.png', 52)
 await drive(b, desk, 'light', 'drive-desktop.png', 63)
 await drive(b, desk, 'dark', 'drive-desktop-dark.png', 63)
 await drive(b, iphone, 'light', 'drive-overlimit-portrait.png', 78)

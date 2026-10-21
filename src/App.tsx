@@ -67,6 +67,14 @@ export default function App() {
   const dark = settings.theme === 'dark' || (settings.theme === 'auto' && sysDark)
   useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light' }, [dark])
 
+  useEffect(() => {
+    if (route !== 'drive') return
+    const h = document.documentElement; h.classList.add('no-scroll'); scrollTo(0, 0)
+    const stop = (e: TouchEvent) => { if (e.touches.length <= 1) e.preventDefault() }
+    document.addEventListener('touchmove', stop, { passive: false })
+    return () => { h.classList.remove('no-scroll'); document.removeEventListener('touchmove', stop) }
+  }, [route])
+
   const shown = toUnit(speed, settings.unit)
   const over = settings.limitOn && settings.limit > 0 && shown > settings.limit + 0.5
   const wasOver = useRef(false)
