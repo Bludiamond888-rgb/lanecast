@@ -2,8 +2,8 @@ import type { Trip } from './trip'
 import type { Unit } from './speed'
 
 export type Theme = 'auto' | 'light' | 'dark'
-export interface Settings { unit: Unit; limit: number; limitOn: boolean; beep: boolean; theme: Theme }
-export const DEFAULTS: Settings = { unit: 'mph', limit: 70, limitOn: true, beep: false, theme: 'auto' }
+export interface Settings { unit: Unit; limit: number; limitOn: boolean; beep: boolean; theme: Theme; calib: number }
+export const DEFAULTS: Settings = { unit: 'mph', limit: 70, limitOn: true, beep: false, theme: 'auto', calib: 0 }
 
 const K = { s: 'lanecast.settings', t: 'lanecast.trips' }
 function read<T>(k: string, d: T): T { try { const v = localStorage.getItem(k); return v ? { ...d, ...JSON.parse(v) } : d } catch { return d } }

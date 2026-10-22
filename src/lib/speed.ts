@@ -36,3 +36,66 @@ export type Unit = 'mph' | 'kmh'
 export const toUnit = (mps: number, u: Unit) => mps * (u === 'mph' ? MPS_TO_MPH : MPS_TO_KMH)
 export const fromUnit = (v: number, u: Unit) => v / (u === 'mph' ? MPS_TO_MPH : MPS_TO_KMH)
 export const distUnit = (m: number, u: Unit) => (u === 'mph' ? m / M_PER_MI : m / 1000)
+
+export const MAX_ACCURACY_M = 30
+export const JUMP_MPS = 15 / MPS_TO_MPH // 15 mph
+export const STOP_MPS = 1 / MPS_TO_MPH // 1 mph
+export const MAX_ACCEL = 4 // m/s² cap for extrapolation (~0.4 g)
+export const MAX_EXTRAP_S = 0.3
+
+/**
+ * Low-latency speed filter. Doppler coords.speed is used directly (light EMA);
+ * position-derived speed is only a fallback. Inaccurate fixes are ignored (last good kept),
+ * implausible derived jumps are discarded, and <1 mph for 2 fixes snaps to 0.
+ */
+export class SpeedFilter {
+  value: number | null = null
+  accel = 0
+  lastGood: Fix | null = null
+  lastT = 0
+  lowCount = 0
+  alpha: number
+  constructor(alpha = 0.7) { this.alpha = alpha }
+
+  /** Returns true if the fix was used for speed. */
+  update(f: Fix): boolean {
+    if (f.accuracy != null && f.accuracy > MAX_ACCURACY_M) return false
+    const doppler = f.speed != null && Number.isFinite(f.speed) && f.speed >= 0
+    let raw: number | null
+    if (doppler) raw = f.speed as number
+    else {
+      raw = speedFrom(this.lastGood, { ...f, speed: null })
+      if (raw != null && this.value != null && this.lastGood && (f.t - this.lastGood.t) < 500 && Math.abs(raw - this.value) > JUMP_MPS) return false
+    }
+    if (raw == null) { this.lastGood = f; return false }
+    if (raw > 90) return false
+    const prevV = this.value, prevT = this.lastT
+    let v = prevV == null ? raw : doppler ? prevV + this.alpha * (raw - prevV) : prevV + 0.5 * (raw - prevV)
+    this.lowCount = raw < STOP_MPS ? this.lowCount + 1 : 0
+    if (this.lowCount >= 2) v = 0
+    const dt = (f.t - prevT) / 1000
+    this.accel = prevV != null && dt > 0.2 && dt < 3 && v > 0 ? Math.max(-MAX_ACCEL, Math.min(MAX_ACCEL, (v - prevV) / dt)) : 0
+    this.value = v; this.lastT = f.t; this.lastGood = f
+    return true
+  }
+
+  /** Speed at time `now` (ms), lightly extrapolated with capped acceleration; never negative. */
+  predict(now: number): number {
+    if (this.value == null) return 0
+    if (this.value === 0) return 0
+    const el = Math.max(0, Math.min(MAX_EXTRAP_S, (now - this.lastT) / 1000))
+    return Math.max(0, this.value + this.accel * el)
+  }
+}
+
+export type SignalLevel = 'good' | 'weak' | 'lost'
+export function signalLevel(lastFixT: number | null, accuracy: number | null, now: number): SignalLevel {
+  if (lastFixT == null || now - lastFixT > 3000) return 'lost'
+  return accuracy != null && accuracy <= 20 ? 'good' : 'weak'
+}
+
+/** Apply calibration offset (given in mph) to a displayed value in unit `u`. Zero stays zero. */
+export function calibrate(shown: number, offsetMph: number, u: Unit): number {
+  if (shown <= 0) return 0
+  return Math.max(0, shown + (u === 'mph' ? offsetMph : offsetMph * 1.609344))
+}

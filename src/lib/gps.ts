@@ -13,7 +13,7 @@ export function startGps(h: GpsHandlers): () => void {
   const id = navigator.geolocation.watchPosition(
     (p) => { h.status('ok'); h.fix({ lat: p.coords.latitude, lon: p.coords.longitude, t: p.timestamp || Date.now(), speed: p.coords.speed, accuracy: p.coords.accuracy }) },
     (e) => h.status(e.code === e.PERMISSION_DENIED ? 'denied' : 'waiting', e.message),
-    { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
   )
   return () => navigator.geolocation.clearWatch(id)
 }

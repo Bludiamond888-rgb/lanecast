@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { smooth, speedFrom, toUnit, fromUnit, distUnit, type Fix } from './lib/speed'
+import { SpeedFilter, signalLevel, calibrate, toUnit, fromUnit, distUnit } from './lib/speed'
 import { angle, frac, gaugeMax, polar, ticks } from './lib/gauge'
 import { startGps, type GpsStatus } from './lib/gps'
 import { addFix, avgMoving, finish, fmtDuration, newTrip, type Trip, type TripState } from './lib/trip'
@@ -49,19 +49,38 @@ export default function App() {
   const [accuracy, setAccuracy] = useState<number | null>(null)
   const [hasFix, setHasFix] = useState(false)
   const [trip, setTrip] = useState<TripState | null>(null)
-  const prev = useRef<Fix | null>(null), sm = useRef<number | null>(null), tripRef = useRef<TripState | null>(null)
+  const filt = useRef(new SpeedFilter()), lastFixT = useRef<number | null>(null), tripRef = useRef<TripState | null>(null)
   const [gpsKey, setGpsKey] = useState(0)
 
   useEffect(() => startGps({
     status: (s, m) => { setStatus(s); setErrMsg(m) },
     fix: (f) => {
-      const raw = speedFrom(prev.current, f); prev.current = f
-      if (raw != null) sm.current = smooth(sm.current, raw)
-      const v = sm.current ?? 0
+      filt.current.update(f); lastFixT.current = performance.now()
+      const v = filt.current.value ?? 0
       setSpeed(v); setAccuracy(f.accuracy ?? null); setHasFix(true)
       if (tripRef.current) { tripRef.current = addFix(tripRef.current, f, v); setTrip(tripRef.current) }
     },
   }), [gpsKey])
+
+  // Animate display toward the (lightly extrapolated) filter speed every frame: ~200 ms ease, no CSS lag.
+  const [disp, setDisp] = useState(0)
+  const [sig, setSig] = useState<'good' | 'weak' | 'lost'>('lost')
+  useEffect(() => {
+    if (route !== 'drive') return
+    let raf = 0, last = performance.now(), d = 0
+    const tick = (now: number) => {
+      const dt = Math.min(0.1, (now - last) / 1000); last = now
+      const ft = filt.current, target = ft.value == null ? 0 : ft.predict(ft.lastT + (now - (lastFixT.current ?? now)))
+      d += (target - d) * (1 - Math.exp(-dt / 0.07)) // τ=70 ms → ~95% in ~210 ms
+      if (target === 0 && d < 0.05) d = 0
+      setDisp((p) => (Math.abs(p - d) > 0.002 ? d : p))
+      setSig(signalLevel(lastFixT.current, accRef.current, now))
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [route])
+  const accRef = useRef<number | null>(null); accRef.current = accuracy
 
   useWakeLock(!!trip)
   const dark = settings.theme === 'dark' || (settings.theme === 'auto' && sysDark)
@@ -75,7 +94,8 @@ export default function App() {
     return () => { h.classList.remove('no-scroll'); document.removeEventListener('touchmove', stop) }
   }, [route])
 
-  const shown = toUnit(speed, settings.unit)
+  void speed
+  const shown = calibrate(toUnit(disp, settings.unit), settings.calib ?? 0, settings.unit)
   const over = settings.limitOn && settings.limit > 0 && shown > settings.limit + 0.5
   const wasOver = useRef(false)
   useEffect(() => { if (over && !wasOver.current && settings.beep) beep(); wasOver.current = over }, [over, settings.beep])
@@ -91,7 +111,7 @@ export default function App() {
 
   return (
     <div className={`app r-${route}`}>
-      {route === 'drive' && <Drive {...{ settings, status, errMsg, speed, shown, accuracy, hasFix, trip, over, toggleTrip, retry: () => setGpsKey(gpsKey + 1) }} />}
+      {route === 'drive' && <Drive {...{ settings, status, errMsg, sig, shown, accuracy, hasFix, trip, over, toggleTrip, retry: () => setGpsKey(gpsKey + 1) }} />}
       {route === 'trips' && <Trips trips={trips} unit={settings.unit} onDelete={(id) => setTrips(trips.filter((t) => t.id !== id))} />}
       {route === 'settings' && <SettingsView s={settings} set={setSettings} />}
       <nav className="nav">
@@ -103,17 +123,18 @@ export default function App() {
   )
 }
 
-function Signal({ status, accuracy }: { status: GpsStatus; accuracy: number | null }) {
+function Signal({ status, accuracy, sig }: { status: GpsStatus; accuracy: number | null; sig: 'good' | 'weak' | 'lost' }) {
   const bars = status !== 'ok' || accuracy == null ? 0 : accuracy <= 10 ? 4 : accuracy <= 25 ? 3 : accuracy <= 60 ? 2 : 1
   return (
     <span className="signal" data-testid="signal" title={accuracy != null ? `±${Math.round(accuracy)} m` : 'No GPS'}>
+      <i className={`gdot ${sig}`} data-testid="gps-dot" aria-label={`GPS ${sig}`} />
       <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden>{[0, 1, 2, 3].map((i) => <rect key={i} x={i * 5} y={10 - i * 3.3} width="3" height={4 + i * 3.3} rx="1" className={i < bars ? 'b on' : 'b'} />)}</svg>
       GPS{accuracy != null && status === 'ok' ? ` ±${Math.round(accuracy)}m` : ''}
     </span>
   )
 }
 
-function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; speed: number; shown: number; accuracy: number | null; hasFix: boolean; trip: TripState | null; over: boolean; toggleTrip: () => void; retry: () => void }) {
+function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; sig: 'good' | 'weak' | 'lost'; shown: number; accuracy: number | null; hasFix: boolean; trip: TripState | null; over: boolean; toggleTrip: () => void; retry: () => void }) {
   const now = useClock(), u = p.settings.unit, du = u === 'mph' ? 'mi' : 'km'
   const t = p.trip
   const elapsed = t ? now - t.start : 0
@@ -122,7 +143,7 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; spee
     <main className={`drive ${p.over ? 'over' : ''}`}>
       <div className="status">
         <span className="clock">{new Date(now).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
-        <Signal status={p.status} accuracy={p.accuracy} />
+        <Signal status={p.status} accuracy={p.accuracy} sig={p.sig} />
         <span className="tripd">{t ? `${distUnit(t.distance, u).toFixed(1)} ${du}` : '—'}</span>
       </div>
       <Gauge value={p.shown} unit={u} waiting={waiting} />
@@ -236,6 +257,16 @@ function SettingsView({ s, set }: { s: Settings; set: (s: Settings) => void }) {
           </div>
         </div>
         <div className="row"><span>Beep when over</span><Toggle label="Beep" on={s.beep} set={(beep) => set({ ...s, beep })} /></div>
+      </div>
+      <div className="card rows">
+        <div className="row">
+          <span>Calibration</span>
+          <div className="stepper">
+            <button aria-label="calib minus" onClick={() => set({ ...s, calib: Math.max(-5, (s.calib ?? 0) - 0.5) })}>−</button>
+            <b data-testid="calib-val">{(s.calib ?? 0) > 0 ? '+' : ''}{(s.calib ?? 0).toFixed(1)}<i> mph</i></b>
+            <button aria-label="calib plus" onClick={() => set({ ...s, calib: Math.min(5, (s.calib ?? 0) + 0.5) })}>+</button>
+          </div>
+        </div>
       </div>
       <p className="muted small">GPS speed is an estimate — always trust your vehicle's speedometer. Screen stays awake during trips where supported. Trips are stored only on this device.</p>
     </main>
