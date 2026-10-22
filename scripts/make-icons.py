@@ -1,4 +1,4 @@
-"""Lanecast icons: top-down car between lane lines on soft grey, blue accent."""
+"""Speed Meter icons: top-down car between lane lines on soft grey, blue accent."""
 from PIL import Image, ImageDraw
 import os
 OUT = os.path.join(os.path.dirname(__file__), '..', 'public', 'icons')

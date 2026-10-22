@@ -59,6 +59,12 @@ await drive(b, desk, 'dark', 'drive-desktop-dark.png', 63)
 await drive(b, iphone, 'light', 'drive-overlimit-portrait.png', 78)
 await drive(b, land, 'dark', 'drive-overlimit.png', 78)
 await drive(b, land, 'light', 'drive-overlimit-landscape-light.png', 78)
+// skeleton watch gauge style
+await drive(b, land, 'light', 'drive-skeleton-landscape.png', 52, { gaugeStyle: 'skeleton' })
+await drive(b, land, 'dark', 'drive-skeleton-landscape-dark.png', 52, { gaugeStyle: 'skeleton' })
+await drive(b, iphone, 'light', 'drive-skeleton-portrait.png', 52, { gaugeStyle: 'skeleton' })
+await drive(b, desk, 'dark', 'drive-skeleton-desktop-dark.png', 63, { gaugeStyle: 'skeleton' })
+await drive(b, land, 'dark', 'drive-skeleton-overlimit.png', 78, { gaugeStyle: 'skeleton' })
 // waiting state (no sim, geolocation never answers)
 { const { ctx, p } = await page(b, iphone, 'light'); await p.goto(url + '#/drive'); await p.waitForTimeout(500); await p.screenshot({ path: out('drive-waiting.png') }); await ctx.close() }
 for (const [r, f] of [['trips', 'trips'], ['settings', 'settings']]) for (const th of ['light', 'dark']) {

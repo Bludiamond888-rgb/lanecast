@@ -146,3 +146,55 @@ h1 { font-size: 30px; font-weight: 300; letter-spacing: -.01em; margin: 6px 4px 
 
 .gdot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; background: #e5484d; }
 .gdot.good { background: #30a46c; } .gdot.weak { background: #f5a524; }
+
+/* ---- Skeleton watch gauge ---- */
+:root { --sk-b1: #e6e8eb; --sk-b2: #d6d9dd; --sk-st1: #f6f7f9; --sk-st2: #aeb3bb; --sk-st3: #e9ebee; --sk-recess: #8b9098;
+  --sk-ring: #f3f1ec; --sk-ring-edge: #b9b4a8; --sk-tick: #2a2b2e; --sk-num: #1d1e21; --sk-hole: #3b3d42; --sk-depth: #00000030;
+  --sk-br1: #eef0f2; --sk-br2: #a9aeb6; --sk-brs: #7f848c; --sk-sa1: #f7f9fcf0; --sk-sa2: #dfe6eef0; --sk-read: #121316; --sk-unit: #5d6168;
+  --sk-n1: #0d1f63; --sk-n2: #3a62d8; --sk-wf: #b8bcc4; --sk-steelw1: #d9dce1; }
+:root[data-theme=dark] { --sk-b1: #24262a; --sk-b2: #1b1c20; --sk-st1: #5b5f66; --sk-st2: #1d1f23; --sk-st3: #44474d; --sk-recess: #050506;
+  --sk-ring: #16171a; --sk-ring-edge: #3d3a33; --sk-tick: #e9e4d6; --sk-num: #efe9da; --sk-hole: #000; --sk-depth: #00000080;
+  --sk-br1: #4a4d54; --sk-br2: #23252a; --sk-brs: #0a0a0c; --sk-sa1: #0b1424f2; --sk-sa2: #111c30f2; --sk-read: #f4f6f9; --sk-unit: #9aa3b2;
+  --sk-n1: #c79a3e; --sk-n2: #f6dc96; --sk-wf: #4b4e55; --sk-steelw1: #8d929a; }
+.sk-b1 { stop-color: var(--sk-b1); } .sk-b2 { stop-color: var(--sk-b2); }
+.sk-st1 { stop-color: var(--sk-st1); } .sk-st2 { stop-color: var(--sk-st2); } .sk-st3 { stop-color: var(--sk-st3); }
+.sk-br1 { stop-color: var(--sk-br1); } .sk-br2 { stop-color: var(--sk-br2); }
+.sk-sa1 { stop-color: var(--sk-sa1); } .sk-sa2 { stop-color: var(--sk-sa2); }
+.sk-n1 { stop-color: var(--sk-n1); } .sk-n2 { stop-color: var(--sk-n2); }
+.sk-case { stroke: #0000002a; stroke-width: 1; filter: drop-shadow(0 8px 20px #00000033); }
+.sk-recess { fill: none; stroke: var(--sk-recess); stroke-width: 1.2; }
+.sk-plate { stroke: var(--sk-ring-edge); stroke-width: .6; }
+.sk-depth { fill: none; stroke: var(--sk-depth); stroke-width: 6; }
+.sk-hole { fill: var(--sk-hole); opacity: .9; }
+.sk-gold { fill: url(#skGold); stroke: #6d4e14; stroke-width: .35; }
+.sk-gold-spoke { stroke: url(#skGold); stroke-linecap: round; }
+.sk-steelw { fill: var(--sk-steelw1); stroke: #3a3d43; stroke-width: .35; }
+.sk-steelw-spoke { stroke: var(--sk-steelw1); stroke-linecap: round; }
+.sk-bridge { stroke: var(--sk-brs); stroke-width: .7; }
+.sk-chaton { fill: url(#skGold); stroke: #6d4e14; stroke-width: .3; }
+.sk-screw { stroke: #0a1236; stroke-width: .3; } .sk-slot { stroke: #050a22; stroke-width: .9; stroke-linecap: round; }
+.sk-bal-rim { fill: none; stroke: url(#skGold); stroke-width: 3.2; } .sk-bal-spoke { stroke: url(#skGold); stroke-width: 1.6; }
+.sk-hair { fill: none; stroke: #2b4fb8; stroke-width: .55; opacity: .9; }
+.sk-ring { fill: var(--sk-ring); opacity: .96; } .sk-ring-edge { fill: none; stroke: var(--sk-ring-edge); stroke-width: .8; }
+.sk-tick { stroke: var(--sk-tick); stroke-width: .6; opacity: .7; } .sk-tick.mid { stroke-width: 1; opacity: .85; }
+.sk-tick.major { stroke-width: 2.6; opacity: 1; stroke: url(#skGold); }
+.sk-num { fill: var(--sk-num); font-size: 12.5px; font-weight: 300; letter-spacing: .04em; font-family: "Didot", "Bodoni 72", "Times New Roman", Georgia, serif;
+  paint-order: stroke; stroke: var(--sk-ring); stroke-width: 3px; stroke-linejoin: round; }
+.sk-win-frame { fill: url(#skGold); stroke: #6d4e14; stroke-width: .4; }
+.sk-win { stroke: #00000040; stroke-width: .6; }
+.sk-read { fill: var(--sk-read); font-size: 50px; font-weight: 800; letter-spacing: -.03em; transition: fill .25s; }
+.sk-unit { fill: var(--sk-unit); font-size: 10px; font-weight: 700; letter-spacing: .24em; }
+.sk-needle path, .sk-moon { fill: url(#skNeedle); }
+.sk-moon { fill: url(#skNeedle); } .sk-moon-hole { fill: var(--sk-ring); }
+.over .sk-read { fill: var(--red); animation: pulse 1s ease-in-out infinite; }
+.over .sk-needle path, .over .sk-moon { fill: var(--red); }
+
+.sk-wheel { transform-box: view-box; will-change: transform; animation: sk-spin 60s linear infinite; animation-play-state: paused; }
+.sk-wheel.ccw { animation-direction: reverse; }
+.skeleton svg.run .sk-wheel { animation-play-state: running; }
+.sk-balance { transform-box: view-box; will-change: transform; animation: sk-osc .5s ease-in-out infinite alternate; }
+@keyframes sk-spin { to { transform: rotate(360deg); } }
+@keyframes sk-osc { from { transform: rotate(-38deg); } to { transform: rotate(38deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .sk-wheel, .sk-balance, .over .sk-read { animation: none !important; }
+}

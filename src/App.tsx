@@ -3,6 +3,7 @@ import { SpeedFilter, signalLevel, calibrate, toUnit, fromUnit, distUnit } from 
 import { angle, frac, gaugeMax, polar, ticks } from './lib/gauge'
 import { startGps, type GpsStatus } from './lib/gps'
 import { addFix, avgMoving, finish, fmtDuration, newTrip, type Trip, type TripState } from './lib/trip'
+import { SkeletonGauge } from './SkeletonGauge'
 import { loadSettings, saveSettings, loadTrips, saveTrips, type Settings } from './lib/store'
 
 type Route = 'drive' | 'trips' | 'settings'
@@ -111,7 +112,7 @@ export default function App() {
 
   return (
     <div className={`app r-${route}`}>
-      {route === 'drive' && <Drive {...{ settings, status, errMsg, sig, shown, accuracy, hasFix, trip, over, toggleTrip, retry: () => setGpsKey(gpsKey + 1) }} />}
+      {route === 'drive' && <Drive {...{ settings, status, errMsg, sig, shown, mps: disp, accuracy, hasFix, trip, over, toggleTrip, retry: () => setGpsKey(gpsKey + 1) }} />}
       {route === 'trips' && <Trips trips={trips} unit={settings.unit} onDelete={(id) => setTrips(trips.filter((t) => t.id !== id))} />}
       {route === 'settings' && <SettingsView s={settings} set={setSettings} />}
       <nav className="nav">
@@ -134,7 +135,7 @@ function Signal({ status, accuracy, sig }: { status: GpsStatus; accuracy: number
   )
 }
 
-function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; sig: 'good' | 'weak' | 'lost'; shown: number; accuracy: number | null; hasFix: boolean; trip: TripState | null; over: boolean; toggleTrip: () => void; retry: () => void }) {
+function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; sig: 'good' | 'weak' | 'lost'; shown: number; mps: number; accuracy: number | null; hasFix: boolean; trip: TripState | null; over: boolean; toggleTrip: () => void; retry: () => void }) {
   const now = useClock(), u = p.settings.unit, du = u === 'mph' ? 'mi' : 'km'
   const t = p.trip
   const elapsed = t ? now - t.start : 0
@@ -146,7 +147,9 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; sig:
         <Signal status={p.status} accuracy={p.accuracy} sig={p.sig} />
         <span className="tripd">{t ? `${distUnit(t.distance, u).toFixed(1)} ${du}` : '—'}</span>
       </div>
-      <Gauge value={p.shown} unit={u} waiting={waiting} />
+      {p.settings.gaugeStyle === 'skeleton'
+        ? <SkeletonGauge value={p.shown} unit={u} waiting={waiting} mps={p.mps} />
+        : <Gauge value={p.shown} unit={u} waiting={waiting} />}
       <section className="left">
         {waiting && <div className="note pulse">Waiting for GPS…</div>}
         {p.status === 'denied' && (
@@ -245,6 +248,7 @@ function SettingsView({ s, set }: { s: Settings; set: (s: Settings) => void }) {
       <div className="card rows">
         <div className="row"><span>Units</span><Seg value={s.unit} set={changeUnit} opts={[['mph', 'MPH'], ['kmh', 'km/h']]} /></div>
         <div className="row"><span>Appearance</span><Seg value={s.theme} set={(theme) => set({ ...s, theme })} opts={[['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} /></div>
+        <div className="row" data-testid="gauge-style"><span>Gauge style</span><Seg value={s.gaugeStyle} set={(gaugeStyle) => set({ ...s, gaugeStyle })} opts={[['classic', 'Classic'], ['skeleton', 'Skeleton']]} /></div>
       </div>
       <div className="card rows">
         <div className="row"><span>Speed alert</span><Toggle label="Speed alert" on={s.limitOn} set={(limitOn) => set({ ...s, limitOn })} /></div>
@@ -268,7 +272,7 @@ function SettingsView({ s, set }: { s: Settings; set: (s: Settings) => void }) {
           </div>
         </div>
       </div>
-      <p className="muted small">GPS speed is an estimate — always trust your vehicle's speedometer. Screen stays awake during trips where supported. Trips are stored only on this device.</p>
+      <p className="muted small"><b>Speed Meter</b> — GPS speed is an estimate — always trust your vehicle's speedometer. Screen stays awake during trips where supported. Trips are stored only on this device.</p>
     </main>
   )
 }

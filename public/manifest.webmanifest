@@ -1,6 +1,6 @@
 {
-  "name": "Lanecast Speedometer",
-  "short_name": "Lanecast",
+  "name": "Speed Meter",
+  "short_name": "Speed Meter",
   "description": "Clean GPS speedometer with trip log and speed alert.",
   "id": "./",
   "start_url": "./#/drive",
