@@ -205,16 +205,30 @@ h1 { font-size: 30px; font-weight: 300; letter-spacing: -.01em; margin: 6px 4px 
 }
 .gauge.simple .num {
   fill: unset; color: var(--fg);
-  font-size: clamp(88px, 26vmin, 200px); font-weight: 200; letter-spacing: -.04em;
-  line-height: .92; font-variant-numeric: tabular-nums;
+  font-size: clamp(120px, 42vmin, 280px); font-weight: 800; letter-spacing: -.05em;
+  line-height: .9; font-variant-numeric: tabular-nums;
   font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Inter, system-ui, sans-serif;
   transition: color .25s;
 }
 .gauge.simple .unit {
   fill: unset; color: var(--mut);
-  font-size: clamp(13px, 3.2vmin, 22px); font-weight: 600; letter-spacing: .32em;
-  text-indent: .32em; /* optical center with letter-spacing */
+  font-size: clamp(14px, 3.6vmin, 24px); font-weight: 700; letter-spacing: .28em;
+  text-indent: .28em; /* optical center with letter-spacing */
 }
 .over .gauge.simple .num { fill: unset; color: var(--red); animation: pulse 1s ease-in-out infinite; }
 .over .gauge.simple .unit { color: #ff8a8a; }
+.gauge.simple .alt {
+  display: flex; align-items: baseline; gap: .35em; margin-top: clamp(6px, 1.6vmin, 16px);
+  color: var(--mut); font-variant-numeric: tabular-nums;
+  font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Inter, system-ui, sans-serif;
+}
+.gauge.simple .alt-num {
+  font-size: clamp(28px, 9vmin, 64px); font-weight: 600; letter-spacing: -.03em; line-height: 1; color: var(--fg);
+  opacity: .72;
+}
+.gauge.simple .alt-unit {
+  font-size: clamp(11px, 2.4vmin, 16px); font-weight: 700; letter-spacing: .22em; text-indent: .22em;
+}
+.over .gauge.simple .alt-num { color: var(--red); opacity: .85; }
+.gauge.simple.both .num { font-size: clamp(108px, 38vmin, 260px); }
 [data-testid="gauge-style"] .seg button { padding: 7px 10px; font-size: 13px; }

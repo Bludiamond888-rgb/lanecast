@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { haversine, speedFrom, smooth, toUnit, fromUnit } from './speed'
+import { haversine, speedFrom, smooth, toUnit, fromUnit, convertUnit, otherUnit } from './speed'
 import { newTrip, addFix, avgMoving, finish, fmtDuration } from './trip'
 
 describe('speed', () => {
@@ -26,6 +26,13 @@ describe('speed', () => {
     expect(toUnit(26.8224, 'mph')).toBeCloseTo(60, 3)
     expect(toUnit(10, 'kmh')).toBe(36)
     expect(fromUnit(60, 'mph')).toBeCloseTo(26.8224, 3)
+  })
+  it('convertUnit mph ↔ km/h', () => {
+    expect(otherUnit('mph')).toBe('kmh')
+    expect(otherUnit('kmh')).toBe('mph')
+    expect(convertUnit(60, 'mph', 'kmh')).toBeCloseTo(96.5606, 2)
+    expect(convertUnit(100, 'kmh', 'mph')).toBeCloseTo(62.137, 2)
+    expect(convertUnit(40, 'mph', 'mph')).toBe(40)
   })
 })
 

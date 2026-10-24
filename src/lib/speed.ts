@@ -36,6 +36,9 @@ export type Unit = 'mph' | 'kmh'
 export const toUnit = (mps: number, u: Unit) => mps * (u === 'mph' ? MPS_TO_MPH : MPS_TO_KMH)
 export const fromUnit = (v: number, u: Unit) => v / (u === 'mph' ? MPS_TO_MPH : MPS_TO_KMH)
 export const distUnit = (m: number, u: Unit) => (u === 'mph' ? m / M_PER_MI : m / 1000)
+export const otherUnit = (u: Unit): Unit => (u === 'mph' ? 'kmh' : 'mph')
+/** Convert a display value between mph and km/h. */
+export const convertUnit = (v: number, from: Unit, to: Unit) => (from === to ? v : toUnit(fromUnit(v, from), to))
 
 export const MAX_ACCURACY_M = 30
 export const JUMP_MPS = 15 / MPS_TO_MPH // 15 mph

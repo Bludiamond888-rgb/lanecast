@@ -33,6 +33,17 @@ describe('gauge style setting', () => {
     expect(isGaugeStyle('simple')).toBe(true)
     expect(isGaugeStyle('x')).toBe(false)
   })
+  it('bothUnits defaults false and persists', () => {
+    expect(DEFAULTS.bothUnits).toBe(false)
+    expect(loadSettings().bothUnits).toBe(false)
+    saveSettings({ ...DEFAULTS, gaugeStyle: 'simple', bothUnits: true })
+    expect(loadSettings().bothUnits).toBe(true)
+    expect(loadSettings().gaugeStyle).toBe('simple')
+  })
+  it('old settings without bothUnits get false', () => {
+    mem.set('lanecast.settings', JSON.stringify({ unit: 'mph', gaugeStyle: 'simple' }))
+    expect(loadSettings().bothUnits).toBe(false)
+  })
 })
 
 describe('skeleton movement', () => {

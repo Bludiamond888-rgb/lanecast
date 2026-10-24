@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { SpeedFilter, signalLevel, calibrate, toUnit, fromUnit, distUnit } from './lib/speed'
+import { SpeedFilter, signalLevel, calibrate, toUnit, fromUnit, distUnit, convertUnit, otherUnit } from './lib/speed'
 import { angle, frac, gaugeMax, polar, ticks } from './lib/gauge'
 import { startGps, type GpsStatus } from './lib/gps'
 import { addFix, avgMoving, finish, fmtDuration, newTrip, type Trip, type TripState } from './lib/trip'
@@ -150,7 +150,7 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; sig:
       {p.settings.gaugeStyle === 'skeleton'
         ? <SkeletonGauge value={p.shown} unit={u} waiting={waiting} mps={p.mps} />
         : p.settings.gaugeStyle === 'simple'
-          ? <SimpleGauge value={p.shown} unit={u} waiting={waiting} />
+          ? <SimpleGauge value={p.shown} unit={u} waiting={waiting} bothUnits={!!p.settings.bothUnits} />
           : <Gauge value={p.shown} unit={u} waiting={waiting} />}
       <section className="left">
         {waiting && <div className="note pulse">Waiting for GPS…</div>}
@@ -179,15 +179,29 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; sig:
 
 const Stat = ({ k, v, s }: { k: string; v: string; s?: string }) => <div className="stat"><span>{k}</span><b>{v}{s && <i> {s}</i>}</b></div>
 
-/** Large centered digits only — no dial, ring, or needle. */
-function SimpleGauge({ value, unit, waiting }: { value: number; unit: Settings['unit']; waiting: boolean }) {
-  const label = unit === 'mph' ? 'MPH' : 'KM/H'
+/** Large centered digits only — no dial, ring, or needle. Optional secondary unit. */
+function SimpleGauge({ value, unit, waiting, bothUnits }: { value: number; unit: Settings['unit']; waiting: boolean; bothUnits?: boolean }) {
+  const primaryLabel = unit === 'mph' ? 'MPH' : 'KM/H'
+  const altU = otherUnit(unit)
+  const altLabel = altU === 'mph' ? 'MPH' : 'KM/H'
   const n = waiting ? '--' : String(Math.round(value))
+  const alt = waiting ? '--' : String(Math.round(convertUnit(value, unit, altU)))
+  const aria = waiting
+    ? 'No GPS'
+    : bothUnits
+      ? `${Math.round(value)} ${unit === 'mph' ? 'mph' : 'km/h'}, ${alt} ${altU === 'mph' ? 'mph' : 'km/h'}`
+      : `${Math.round(value)} ${unit === 'mph' ? 'mph' : 'km/h'}`
   return (
-    <div className="gauge simple" data-testid="speed" data-style="simple" role="img" aria-label={`${waiting ? 'No GPS' : Math.round(value)} ${unit === 'mph' ? 'mph' : 'km/h'}`}>
+    <div className={`gauge simple${bothUnits ? ' both' : ''}`} data-testid="speed" data-style="simple" role="img" aria-label={aria}>
       <div className="simple-read">
         <div className="num">{n}</div>
-        <div className="unit">{label}</div>
+        <div className="unit">{primaryLabel}</div>
+        {bothUnits && (
+          <div className="alt" data-testid="alt-speed">
+            <span className="alt-num">{alt}</span>
+            <span className="alt-unit">{altLabel}</span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -265,6 +279,9 @@ function SettingsView({ s, set }: { s: Settings; set: (s: Settings) => void }) {
         <div className="row"><span>Units</span><Seg value={s.unit} set={changeUnit} opts={[['mph', 'MPH'], ['kmh', 'km/h']]} /></div>
         <div className="row"><span>Appearance</span><Seg value={s.theme} set={(theme) => set({ ...s, theme })} opts={[['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} /></div>
         <div className="row" data-testid="gauge-style"><span>Gauge style</span><Seg value={s.gaugeStyle} set={(gaugeStyle) => set({ ...s, gaugeStyle })} opts={[['classic', 'Classic'], ['skeleton', 'Skeleton'], ['simple', 'Simple']]} /></div>
+        {s.gaugeStyle === 'simple' && (
+          <div className="row" data-testid="both-units"><span>Show both units</span><Toggle label="Show both mph and km/h" on={!!s.bothUnits} set={(bothUnits) => set({ ...s, bothUnits })} /></div>
+        )}
       </div>
       <div className="card rows">
         <div className="row"><span>Speed alert</span><Toggle label="Speed alert" on={s.limitOn} set={(limitOn) => set({ ...s, limitOn })} /></div>

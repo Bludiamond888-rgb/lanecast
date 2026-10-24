@@ -77,6 +77,12 @@ await drive(b, land, 'dark', 'drive-simple-landscape-dark.png', 52, { gaugeStyle
 await drive(b, iphone, 'light', 'drive-simple-portrait.png', 52, { gaugeStyle: 'simple' })
 await drive(b, desk, 'dark', 'drive-simple-desktop-dark.png', 63, { gaugeStyle: 'simple' })
 await drive(b, land, 'dark', 'drive-simple-overlimit.png', 78, { gaugeStyle: 'simple' })
+await drive(b, land, 'light', 'drive-simple-both-landscape.png', 52, { gaugeStyle: 'simple', bothUnits: true })
+await drive(b, land, 'dark', 'drive-simple-both-landscape-dark.png', 52, { gaugeStyle: 'simple', bothUnits: true })
+await drive(b, iphone, 'light', 'drive-simple-both-portrait.png', 52, { gaugeStyle: 'simple', bothUnits: true })
+await drive(b, desk, 'dark', 'drive-simple-both-desktop-dark.png', 63, { gaugeStyle: 'simple', bothUnits: true })
+// settings with Simple selected (shows both-units toggle)
+{ const { ctx, p } = await page(b, iphone, 'light', { gaugeStyle: 'simple', bothUnits: true }); await p.goto(url + '#/settings'); await p.waitForTimeout(400); await p.screenshot({ path: out('settings-simple-both.png') }); await ctx.close() }
 // waiting state (no sim, geolocation never answers)
 { const { ctx, p } = await page(b, iphone, 'light'); await p.goto(url + '#/drive'); await p.waitForTimeout(500); await p.screenshot({ path: out('drive-waiting.png') }); await ctx.close() }
 for (const [r, f] of [['trips', 'trips'], ['settings', 'settings']]) for (const th of ['light', 'dark']) {
