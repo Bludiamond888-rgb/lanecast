@@ -19,11 +19,20 @@ describe('gauge style setting', () => {
     expect(JSON.parse(mem.get('lanecast.settings')!).gaugeStyle).toBe('skeleton')
     expect(loadSettings().gaugeStyle).toBe('skeleton')
   })
+  it('persists simple in localStorage', () => {
+    saveSettings({ ...DEFAULTS, gaugeStyle: 'simple' })
+    expect(JSON.parse(mem.get('lanecast.settings')!).gaugeStyle).toBe('simple')
+    expect(loadSettings().gaugeStyle).toBe('simple')
+  })
   it('invalid stored value falls back to classic', () => {
     mem.set('lanecast.settings', JSON.stringify({ gaugeStyle: 'tourbillon' }))
     expect(loadSettings().gaugeStyle).toBe('classic')
   })
-  it('type guard', () => { expect(isGaugeStyle('skeleton')).toBe(true); expect(isGaugeStyle('x')).toBe(false) })
+  it('type guard', () => {
+    expect(isGaugeStyle('skeleton')).toBe(true)
+    expect(isGaugeStyle('simple')).toBe(true)
+    expect(isGaugeStyle('x')).toBe(false)
+  })
 })
 
 describe('skeleton movement', () => {

@@ -28,13 +28,19 @@ async function check(p, name) {
   const o = await p.evaluate(() => ({ sx: document.documentElement.scrollWidth > innerWidth, sy: document.documentElement.scrollHeight > innerHeight + 1 }))
   if (o.sx || (name.startsWith('drive') && o.sy)) { bad++; console.log('OVERFLOW', name, o) }
   if (name.startsWith('drive')) {
-    const r = await p.evaluate(() => { scrollTo(0, 500); document.scrollingElement.scrollTop = 500; const b = document.querySelector('.drive').getBoundingClientRect(); const els = [...document.querySelectorAll('.gauge svg, .stats, [data-testid=trip-btn], .status, .nav')].map((e) => e.getBoundingClientRect()); return { y: scrollY, top: document.scrollingElement.scrollTop, sh: document.documentElement.scrollHeight, ih: innerHeight, clip: els.some((e) => e.top < -0.5 || e.bottom > innerHeight + 0.5 || e.left < -0.5 || e.right > innerWidth + 0.5), b: b.height } })
+    const r = await p.evaluate(() => { scrollTo(0, 500); document.scrollingElement.scrollTop = 500; const b = document.querySelector('.drive').getBoundingClientRect(); const els = [...document.querySelectorAll('.gauge svg, .gauge.simple, .stats, [data-testid=trip-btn], .status, .nav')].map((e) => e.getBoundingClientRect()); return { y: scrollY, top: document.scrollingElement.scrollTop, sh: document.documentElement.scrollHeight, ih: innerHeight, clip: els.some((e) => e.top < -0.5 || e.bottom > innerHeight + 0.5 || e.left < -0.5 || e.right > innerWidth + 0.5), b: b.height } })
     const c = await p.evaluate(() => {
-      const g = document.querySelector('.gauge svg').getBoundingClientRect(), R = g.width / 2 * 146 / 150, cx = g.left + g.width / 2, cy = g.top + g.height / 2
+      const gauge = document.querySelector('.gauge')
+      const svg = gauge?.querySelector('svg')
+      const simple = gauge?.classList.contains('simple')
+      const g = (svg || gauge).getBoundingClientRect()
+      const cx = g.left + g.width / 2, cy = g.top + g.height / 2
+      // Dial styles use the bezel radius; Simple uses a tighter core around the digits.
+      const R = simple ? Math.min(g.width, g.height) * 0.28 : g.width / 2 * 146 / 150
       const hit = [...document.querySelectorAll('.status, .stat, [data-testid=trip-btn], .nav a, .note')].filter((e) => { const b = e.getBoundingClientRect(); if (!b.width) return false
         const nx = Math.max(b.left, Math.min(cx, b.right)), ny = Math.max(b.top, Math.min(cy, b.bottom)); return Math.hypot(nx - cx, ny - cy) < R }).map((e) => e.className || e.textContent)
-      return { dx: cx - innerWidth / 2, dy: cy - innerHeight / 2, hit, size: Math.round(g.width) } })
-    if (Math.abs(c.dx) > 2 || Math.abs(c.dy) > 2 || c.hit.length) { bad++; console.log('OFFCENTER/OVERLAP', name, c) } else console.log('centered', name, c.dx.toFixed(1), c.dy.toFixed(1), 'size', c.size)
+      return { dx: cx - innerWidth / 2, dy: cy - innerHeight / 2, hit, size: Math.round(g.width), simple: !!simple } })
+    if (Math.abs(c.dx) > 2 || Math.abs(c.dy) > 2 || c.hit.length) { bad++; console.log('OFFCENTER/OVERLAP', name, c) } else console.log('centered', name, c.dx.toFixed(1), c.dy.toFixed(1), 'size', c.size, c.simple ? 'simple' : '')
     if (r.y || r.top || r.sh > r.ih || r.clip) { bad++; console.log('SCROLL/CLIP', name, r) } else console.log('ok', name, r.sh, '<=', r.ih)
   }
 }
@@ -65,6 +71,12 @@ await drive(b, land, 'dark', 'drive-skeleton-landscape-dark.png', 52, { gaugeSty
 await drive(b, iphone, 'light', 'drive-skeleton-portrait.png', 52, { gaugeStyle: 'skeleton' })
 await drive(b, desk, 'dark', 'drive-skeleton-desktop-dark.png', 63, { gaugeStyle: 'skeleton' })
 await drive(b, land, 'dark', 'drive-skeleton-overlimit.png', 78, { gaugeStyle: 'skeleton' })
+// simple gauge style (large digits only)
+await drive(b, land, 'light', 'drive-simple-landscape.png', 52, { gaugeStyle: 'simple' })
+await drive(b, land, 'dark', 'drive-simple-landscape-dark.png', 52, { gaugeStyle: 'simple' })
+await drive(b, iphone, 'light', 'drive-simple-portrait.png', 52, { gaugeStyle: 'simple' })
+await drive(b, desk, 'dark', 'drive-simple-desktop-dark.png', 63, { gaugeStyle: 'simple' })
+await drive(b, land, 'dark', 'drive-simple-overlimit.png', 78, { gaugeStyle: 'simple' })
 // waiting state (no sim, geolocation never answers)
 { const { ctx, p } = await page(b, iphone, 'light'); await p.goto(url + '#/drive'); await p.waitForTimeout(500); await p.screenshot({ path: out('drive-waiting.png') }); await ctx.close() }
 for (const [r, f] of [['trips', 'trips'], ['settings', 'settings']]) for (const th of ['light', 'dark']) {

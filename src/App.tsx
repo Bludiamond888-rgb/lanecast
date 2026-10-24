@@ -149,7 +149,9 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; sig:
       </div>
       {p.settings.gaugeStyle === 'skeleton'
         ? <SkeletonGauge value={p.shown} unit={u} waiting={waiting} mps={p.mps} />
-        : <Gauge value={p.shown} unit={u} waiting={waiting} />}
+        : p.settings.gaugeStyle === 'simple'
+          ? <SimpleGauge value={p.shown} unit={u} waiting={waiting} />
+          : <Gauge value={p.shown} unit={u} waiting={waiting} />}
       <section className="left">
         {waiting && <div className="note pulse">Waiting for GPS…</div>}
         {p.status === 'denied' && (
@@ -176,6 +178,20 @@ function Drive(p: { settings: Settings; status: GpsStatus; errMsg?: string; sig:
 }
 
 const Stat = ({ k, v, s }: { k: string; v: string; s?: string }) => <div className="stat"><span>{k}</span><b>{v}{s && <i> {s}</i>}</b></div>
+
+/** Large centered digits only — no dial, ring, or needle. */
+function SimpleGauge({ value, unit, waiting }: { value: number; unit: Settings['unit']; waiting: boolean }) {
+  const label = unit === 'mph' ? 'MPH' : 'KM/H'
+  const n = waiting ? '--' : String(Math.round(value))
+  return (
+    <div className="gauge simple" data-testid="speed" data-style="simple" role="img" aria-label={`${waiting ? 'No GPS' : Math.round(value)} ${unit === 'mph' ? 'mph' : 'km/h'}`}>
+      <div className="simple-read">
+        <div className="num">{n}</div>
+        <div className="unit">{label}</div>
+      </div>
+    </div>
+  )
+}
 
 /** Round 270° speedometer: ticks every 10, labels every 20, progress arc + needle, bold readout. */
 function Gauge({ value, unit, waiting }: { value: number; unit: Settings['unit']; waiting: boolean }) {
@@ -248,7 +264,7 @@ function SettingsView({ s, set }: { s: Settings; set: (s: Settings) => void }) {
       <div className="card rows">
         <div className="row"><span>Units</span><Seg value={s.unit} set={changeUnit} opts={[['mph', 'MPH'], ['kmh', 'km/h']]} /></div>
         <div className="row"><span>Appearance</span><Seg value={s.theme} set={(theme) => set({ ...s, theme })} opts={[['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]} /></div>
-        <div className="row" data-testid="gauge-style"><span>Gauge style</span><Seg value={s.gaugeStyle} set={(gaugeStyle) => set({ ...s, gaugeStyle })} opts={[['classic', 'Classic'], ['skeleton', 'Skeleton']]} /></div>
+        <div className="row" data-testid="gauge-style"><span>Gauge style</span><Seg value={s.gaugeStyle} set={(gaugeStyle) => set({ ...s, gaugeStyle })} opts={[['classic', 'Classic'], ['skeleton', 'Skeleton'], ['simple', 'Simple']]} /></div>
       </div>
       <div className="card rows">
         <div className="row"><span>Speed alert</span><Toggle label="Speed alert" on={s.limitOn} set={(limitOn) => set({ ...s, limitOn })} /></div>

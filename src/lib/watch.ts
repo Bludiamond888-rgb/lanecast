@@ -1,7 +1,8 @@
-/** Skeleton-watch gauge helpers (pure, testable). */
-export type GaugeStyle = 'classic' | 'skeleton'
-export const GAUGE_STYLES: GaugeStyle[] = ['classic', 'skeleton']
-export const isGaugeStyle = (v: unknown): v is GaugeStyle => v === 'classic' || v === 'skeleton'
+/** Gauge style helpers (pure, testable). */
+export type GaugeStyle = 'classic' | 'skeleton' | 'simple'
+export const GAUGE_STYLES: GaugeStyle[] = ['classic', 'skeleton', 'simple']
+export const isGaugeStyle = (v: unknown): v is GaugeStyle =>
+  v === 'classic' || v === 'skeleton' || v === 'simple'
 
 /**
  * Seconds per revolution of the main gear for a speed in m/s, or 0 when stopped.

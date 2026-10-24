@@ -196,3 +196,25 @@ h1 { font-size: 30px; font-weight: 300; letter-spacing: -.01em; margin: 6px 4px 
 @media (prefers-reduced-motion: reduce) {
   .sk-wheel, .sk-balance, .over .sk-read { animation: none !important; }
 }
+
+/* ---- Simple gauge: large centered speed only (no dial / ring / needle) ---- */
+.gauge.simple { color: var(--fg); }
+.gauge.simple .simple-read {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 100%; height: 100%; gap: clamp(4px, 1.2vmin, 14px);
+}
+.gauge.simple .num {
+  fill: unset; color: var(--fg);
+  font-size: clamp(88px, 26vmin, 200px); font-weight: 200; letter-spacing: -.04em;
+  line-height: .92; font-variant-numeric: tabular-nums;
+  font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Inter, system-ui, sans-serif;
+  transition: color .25s;
+}
+.gauge.simple .unit {
+  fill: unset; color: var(--mut);
+  font-size: clamp(13px, 3.2vmin, 22px); font-weight: 600; letter-spacing: .32em;
+  text-indent: .32em; /* optical center with letter-spacing */
+}
+.over .gauge.simple .num { fill: unset; color: var(--red); animation: pulse 1s ease-in-out infinite; }
+.over .gauge.simple .unit { color: #ff8a8a; }
+[data-testid="gauge-style"] .seg button { padding: 7px 10px; font-size: 13px; }
