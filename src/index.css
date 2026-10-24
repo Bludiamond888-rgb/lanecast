@@ -218,17 +218,19 @@ h1 { font-size: 30px; font-weight: 300; letter-spacing: -.01em; margin: 6px 4px 
 .over .gauge.simple .num { fill: unset; color: var(--red); animation: pulse 1s ease-in-out infinite; }
 .over .gauge.simple .unit { color: #ff8a8a; }
 .gauge.simple .alt {
-  display: flex; align-items: baseline; gap: .35em; margin-top: clamp(6px, 1.6vmin, 16px);
-  color: var(--mut); font-variant-numeric: tabular-nums;
+  display: flex; align-items: baseline; gap: .4em; margin-top: clamp(8px, 2vmin, 18px);
+  color: var(--fg); font-variant-numeric: tabular-nums;
   font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Inter, system-ui, sans-serif;
 }
 .gauge.simple .alt-num {
-  font-size: clamp(28px, 9vmin, 64px); font-weight: 600; letter-spacing: -.03em; line-height: 1; color: var(--fg);
-  opacity: .72;
+  font-size: clamp(42px, 14vmin, 100px); font-weight: 800; letter-spacing: -.04em; line-height: 1; color: var(--fg);
+  opacity: 1;
 }
 .gauge.simple .alt-unit {
-  font-size: clamp(11px, 2.4vmin, 16px); font-weight: 700; letter-spacing: .22em; text-indent: .22em;
+  font-size: clamp(14px, 3.4vmin, 22px); font-weight: 700; letter-spacing: .24em; text-indent: .24em;
+  color: var(--fg); opacity: .78;
 }
-.over .gauge.simple .alt-num { color: var(--red); opacity: .85; }
+.over .gauge.simple .alt-num { color: var(--red); opacity: 1; }
+.over .gauge.simple .alt-unit { color: #ff8a8a; opacity: 1; }
 .gauge.simple.both .num { font-size: clamp(108px, 38vmin, 260px); }
 [data-testid="gauge-style"] .seg button { padding: 7px 10px; font-size: 13px; }
